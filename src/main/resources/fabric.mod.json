@@ -1,0 +1,23 @@
+{
+	"schemaVersion": 1,
+	"id": "loadingoverlayduration",
+	"version": "${version}",
+	"name": "Loading Overlay Duration",
+	"description": "Loading Overlay Duration",
+	"authors": [
+		"fishstiz"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/loadingoverlayduration/icon.png",
+	"environment": "client",
+	"mixins": [
+		"loadingoverlayduration.mixins.json"
+	],
+	"accessWidener": "loadingoverlayduration.classtweaker",
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
