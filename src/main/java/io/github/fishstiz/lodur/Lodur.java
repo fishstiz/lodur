@@ -29,12 +29,21 @@ public final class Lodur implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) ->
-                dispatcher.register(ClientCommands.literal("lodur")
-                        .then(ClientCommands.literal("test")
-                                .then(ClientCommands.literal("run")
-                                        .then(ClientCommands.argument("count", IntegerArgumentType.integer(1)).executes(executor(false))
-                                                .then(ClientCommands.argument("minimize", BoolArgumentType.bool()).executes(executor(true))))))));
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> {
+            var lodur = ClientCommands.literal("lodur");
+
+            dispatcher.register(
+                    lodur.then(ClientCommands.literal("test")
+                            .then(ClientCommands.literal("run")
+                                    .then(ClientCommands.argument("count", IntegerArgumentType.integer(1)).executes(testExecutor(false))
+                                            .then(ClientCommands.argument("minimize", BoolArgumentType.bool()).executes(testExecutor(true))))))
+            );
+
+            dispatcher.register(
+                    lodur.then(ClientCommands.literal("reload").executes(reloadExecutor(false))
+                            .then(ClientCommands.argument("discovery", BoolArgumentType.bool()).executes(reloadExecutor(true))))
+            );
+        });
 
         ClientTickEvents.END_CLIENT_TICK.register(_ -> {
             Runnable pendingTest = this.pendingTest;
@@ -44,11 +53,23 @@ public final class Lodur implements ClientModInitializer {
         });
     }
 
-    private Command<FabricClientCommandSource> executor(boolean parseMinimize) {
+    private Command<FabricClientCommandSource> testExecutor(boolean parseMinimize) {
         return context -> {
             int count = IntegerArgumentType.getInteger(context, "count");
             boolean minimize = parseMinimize && BoolArgumentType.getBool(context, "minimize");
             startTest(context.getSource().getClient(), count, minimize);
+            return 1;
+        };
+    }
+
+    private Command<FabricClientCommandSource> reloadExecutor(boolean parseDiscovery) {
+        return context -> {
+            boolean discovery = !parseDiscovery || BoolArgumentType.getBool(context, "discovery");
+            Minecraft client = context.getSource().getClient();
+            client.execute(() -> {
+                sendChat(client, discovery ? "[lodur] Reloading Resources" : "[lodur] Reloading Resources without Discovery");
+                ((ResourceReloader) client).lodur$reload(discovery);
+            });
             return 1;
         };
     }

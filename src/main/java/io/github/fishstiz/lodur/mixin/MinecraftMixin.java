@@ -1,14 +1,20 @@
 package io.github.fishstiz.lodur.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import io.github.fishstiz.lodur.Lodur;
+import io.github.fishstiz.lodur.ResourceReloader;
 import net.minecraft.client.GameLoadCookie;
 import net.minecraft.client.Minecraft;
+import net.minecraft.server.packs.repository.PackRepository;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -21,7 +27,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 @Mixin(Minecraft.class)
-abstract class MinecraftMixin {
+abstract class MinecraftMixin implements ResourceReloader {
+    @Unique
+    private static final ScopedValue<Boolean> CANCEL_RELOAD = ScopedValue.newInstance();
+
+    @Shadow
+    public abstract CompletableFuture<Void> reloadResourcePacks();
+
     @ModifyArg(
             method = "reloadResourcePacks(ZLnet/minecraft/client/GameLoadCookie;)Ljava/util/concurrent/CompletableFuture;",
             at = @At(
@@ -67,5 +79,22 @@ abstract class MinecraftMixin {
         }
 
         return original;
+    }
+
+    @WrapOperation(
+            method = "reloadResourcePacks(ZLnet/minecraft/client/GameLoadCookie;)Ljava/util/concurrent/CompletableFuture;",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/repository/PackRepository;reload()V")
+    )
+    private void cancelDiscovery(PackRepository instance, Operation<Void> original) {
+        if (!CANCEL_RELOAD.isBound() || !CANCEL_RELOAD.get()) {
+            original.call(instance);
+        } else {
+            Lodur.LOG.warn("[lodur] Reloading without discovery may cause issues when reading stale resources!");
+        }
+    }
+
+    @Override
+    public void lodur$reload(boolean discovery) {
+        ScopedValue.where(CANCEL_RELOAD, !discovery).run(this::reloadResourcePacks);
     }
 }
