@@ -1,9 +1,18 @@
-# Loading Overlay Duration
+# Lodur
 
-## Setup
+Logs the duration of resource pack reloading in Minecraft.
 
-For setup instructions, please see the [Fabric Documentation page](https://docs.fabricmc.net/develop/getting-started/creating-a-project#setting-up) related to the IDE that you are using.
+## Bulk Automated Testing
 
-## License
+To test reloads in bulk, you can run the in-game command:
 
-This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
+```
+/lodur test run <count> [<minimize>]
+```
+
+| Argument | Mandatory | Description           |
+|----------|-----------|-----------------------|
+| count    | yes       | Number of reloads.    |
+| minimize | no        | Minimizes the window. |
+
+A report of the run statistics will be generated after the test.

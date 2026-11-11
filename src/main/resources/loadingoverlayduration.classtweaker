@@ -1,3 +1,0 @@
-classTweaker v2 official
-accessible class net/minecraft/client/ResourceLoadStateTracker$ReloadState
-accessible field net/minecraft/client/ResourceLoadStateTracker$ReloadState finished Z

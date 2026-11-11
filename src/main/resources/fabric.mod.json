@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "loadingoverlayduration",
+	"id": "lodur",
 	"version": "${version}",
 	"name": "Loading Overlay Duration",
 	"description": "Loading Overlay Duration",
@@ -8,16 +8,19 @@
 		"fishstiz"
 	],
 	"license": "CC0-1.0",
-	"icon": "assets/loadingoverlayduration/icon.png",
+	"icon": "assets/lodur/icon.png",
 	"environment": "client",
+	"entrypoints": {
+		"client": [
+          "io.github.fishstiz.lodur.Lodur"
+		]
+	},
 	"mixins": [
-		"loadingoverlayduration.mixins.json"
+		"lodur.mixins.json"
 	],
-	"accessWidener": "loadingoverlayduration.classtweaker",
 	"depends": {
 		"fabricloader": ">=0.20.1",
 		"minecraft": "~26.3",
-		"java": ">=25",
-		"fabric-api": "*"
+		"java": ">=25"
 	}
 }

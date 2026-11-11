@@ -52,10 +52,6 @@ jar {
 	}
 }
 
-loom {
-	accessWidenerPath = file("src/main/resources/loadingoverlayduration.classtweaker")
-}
-
 // configure the maven publication
 publishing {
 	publications {
