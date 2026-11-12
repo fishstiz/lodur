@@ -1,26 +1,26 @@
 {
-	"schemaVersion": 1,
-	"id": "lodur",
-	"version": "${version}",
-	"name": "Loading Overlay Duration",
-	"description": "Loading Overlay Duration",
-	"authors": [
-		"fishstiz"
-	],
-	"license": "CC0-1.0",
-	"icon": "assets/lodur/icon.png",
-	"environment": "client",
-	"entrypoints": {
-		"client": [
-          "io.github.fishstiz.lodur.Lodur"
-		]
-	},
-	"mixins": [
-		"lodur.mixins.json"
-	],
-	"depends": {
-		"fabricloader": ">=0.20.1",
-		"minecraft": "~26.3",
-		"java": ">=25"
-	}
+  "schemaVersion": 1,
+  "id": "lodur",
+  "version": "${version}",
+  "name": "Loading Overlay Duration",
+  "description": "Loading Overlay Duration",
+  "authors": [
+    "fishstiz"
+  ],
+  "license": "CC0-1.0",
+  "icon": "assets/lodur/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "io.github.fishstiz.lodur.Lodur"
+    ]
+  },
+  "mixins": [
+    "lodur.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "~26.3",
+    "java": ">=25"
+  }
 }
