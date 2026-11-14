@@ -1,6 +1,9 @@
 package io.github.fishstiz.lodur;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface ResourceReloader {
-    default void lodur$reload(boolean discovery) {
+    default CompletableFuture<Void> lodur$reload(boolean discovery) {
+        throw new AssertionError();
     }
 }

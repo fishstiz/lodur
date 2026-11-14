@@ -3,6 +3,7 @@ package io.github.fishstiz.lodur;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.context.CommandContext;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.fabricmc.api.ClientModInitializer;
@@ -36,7 +37,8 @@ public final class Lodur implements ClientModInitializer {
                     lodur.then(ClientCommands.literal("test")
                             .then(ClientCommands.literal("run")
                                     .then(ClientCommands.argument("count", IntegerArgumentType.integer(1)).executes(testExecutor(false))
-                                            .then(ClientCommands.argument("minimize", BoolArgumentType.bool()).executes(testExecutor(true))))))
+                                            .then(ClientCommands.argument("minimize", BoolArgumentType.bool()).executes(testExecutor(true))
+                                                    .then(ClientCommands.argument("discovery", BoolArgumentType.bool()).executes(testExecutor(true, true)))))))
             );
 
             dispatcher.register(
@@ -53,18 +55,23 @@ public final class Lodur implements ClientModInitializer {
         });
     }
 
-    private Command<FabricClientCommandSource> testExecutor(boolean parseMinimize) {
+    private Command<FabricClientCommandSource> testExecutor(boolean parseMinimize, boolean parseDiscovery) {
         return context -> {
             int count = IntegerArgumentType.getInteger(context, "count");
-            boolean minimize = parseMinimize && BoolArgumentType.getBool(context, "minimize");
-            startTest(context.getSource().getClient(), count, minimize);
+            boolean minimize = parseBool(context, "minimize", parseMinimize, false);
+            boolean discovery = parseBool(context, "discovery", parseDiscovery, true);
+            startTest(context.getSource().getClient(), count, minimize, discovery);
             return 1;
         };
     }
 
+    private Command<FabricClientCommandSource> testExecutor(boolean parseMinimize) {
+        return testExecutor(parseMinimize, false);
+    }
+
     private Command<FabricClientCommandSource> reloadExecutor(boolean parseDiscovery) {
         return context -> {
-            boolean discovery = !parseDiscovery || BoolArgumentType.getBool(context, "discovery");
+            boolean discovery = parseBool(context, "discovery", parseDiscovery, true);
             Minecraft client = context.getSource().getClient();
             client.execute(() -> {
                 sendChat(client, discovery ? "[lodur] Reloading Resources" : "[lodur] Reloading Resources without Discovery");
@@ -74,7 +81,7 @@ public final class Lodur implements ClientModInitializer {
         };
     }
 
-    private void startTest(Minecraft client, int count, boolean minimize) {
+    private void startTest(Minecraft client, int count, boolean minimize, boolean discovery) {
         if (this.pendingTest != null) {
             sendChat(client, "[lodur] Test is already running!");
         } else if (count > 0) {
@@ -86,11 +93,18 @@ public final class Lodur implements ClientModInitializer {
             SDLVideo.SDL_SetWindowProgressValue(client.getWindow().handle(), 0f);
 
             sendChat(client, "[lodur] Starting test with " + count + " reload/s...");
-            queueTest(client, count, count, Instant.now(), new LongArrayList(count));
+            queueTest(client, discovery, count, count, Instant.now(), new LongArrayList(count));
         }
     }
 
-    private void queueTest(Minecraft client, int remaining, int count, Instant start, LongList reloadDurations) {
+    private void queueTest(
+            Minecraft client,
+            boolean discovery,
+            int remaining,
+            int count,
+            Instant start,
+            LongList reloadDurations
+    ) {
         if (remaining <= 0) {
             endTest(client, start, reloadDurations);
             return;
@@ -104,14 +118,14 @@ public final class Lodur implements ClientModInitializer {
             this.pendingTest = null;
 
             Instant reloadStart = Instant.now();
-            client.reloadResourcePacks().whenCompleteAsync((_, throwable) -> {
+            ((ResourceReloader) client).lodur$reload(discovery).whenCompleteAsync((_, throwable) -> {
                 if (throwable == null) {
                     long duration = Duration.between(reloadStart, Instant.now()).toMillis();
                     int progress = count - remaining + 1;
                     LOG.info("[lodur] Test reload {}/{} took {} ms", progress, count, duration);
                     reloadDurations.add(duration);
                     SDLVideo.SDL_SetWindowProgressValue(client.getWindow().handle(), (float) progress / count);
-                    queueTest(client, remaining - 1, count, start, reloadDurations);
+                    queueTest(client, discovery, remaining - 1, count, start, reloadDurations);
                 } else {
                     sendChat(client, "[lodur] An error occurred while running test. Aborting...");
                     SDLVideo.SDL_SetWindowProgressState(client.getWindow().handle(), SDLVideo.SDL_PROGRESS_STATE_ERROR);
@@ -156,5 +170,9 @@ public final class Lodur implements ClientModInitializer {
 
     private static void sendChat(Minecraft client, String message) {
         sendChat(client, Component.literal(message));
+    }
+
+    private static boolean parseBool(CommandContext<?> context, String arg, boolean parse, boolean defaultValue) {
+        return parse ? BoolArgumentType.getBool(context, arg) : defaultValue;
     }
 }

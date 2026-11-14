@@ -94,7 +94,7 @@ abstract class MinecraftMixin implements ResourceReloader {
     }
 
     @Override
-    public void lodur$reload(boolean discovery) {
-        ScopedValue.where(CANCEL_RELOAD, !discovery).run(this::reloadResourcePacks);
+    public CompletableFuture<Void> lodur$reload(boolean discovery) {
+        return ScopedValue.where(CANCEL_RELOAD, !discovery).call(this::reloadResourcePacks);
     }
 }
